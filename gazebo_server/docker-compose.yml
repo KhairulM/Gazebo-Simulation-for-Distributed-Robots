@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  multimaster-gazebo:
+    build: .
+    container_name: "multimaster-gazebo"
+    network_mode: host
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./multimaster_gazebo.launch:/multimaster_gazebo.launch
+    command: /bin/bash -c "source /opt/ros/noetic/setup.bash && source /catkin_ws/devel/setup.bash && roslaunch /multimaster_gazebo.launch"

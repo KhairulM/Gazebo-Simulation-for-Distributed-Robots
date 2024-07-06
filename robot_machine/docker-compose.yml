@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  multimaster-robot:
+    build: .
+    container_name: "multimaster-robot"
+    network_mode: host
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./multimaster-and-spawn-robot.launch:/multimaster-and-spawn-robot.launch
+    command: /bin/bash -c "source /opt/ros/noetic/setup.bash && source /catkin_ws/devel/setup.bash && roslaunch /multimaster-and-spawn-robot.launch robot_name:=robot1 x_pos:=-1.0"

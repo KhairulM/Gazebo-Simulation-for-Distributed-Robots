@@ -1,0 +1,35 @@
+<launch>
+    <arg name="model" default="waffle_pi" doc="model type [burger, waffle, waffle_pi]"/>
+    <arg name="robot_name" doc="name of the robot (must be unique and does not contain whitespaces)"/>
+    <arg name="x_pos" default="-3.0"/>
+    <arg name="y_pos" default="1.0"/>
+    <arg name="z_pos" default="0.0"/>
+    
+    <node name="master_discovery" pkg="fkie_master_discovery" type="master_discovery" output="screen"/>
+    <node name="master_sync" pkg="fkie_master_sync" type="master_sync" output="screen">
+            <rosparam param="sync_hosts"> ['<GAZEBO-SERVER-HOSTNAME>'] </rosparam>
+            <rosparam param="ignore_hosts"> ['<ROBOT2-HOSTNAME>'] </rosparam>
+    </node>
+    
+    <param name="/use_sim_time" value="true"/>
+
+    <group ns="$(arg robot_name)">
+            <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro' robot_name:=$(arg robot_name)" />
+            <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg robot_name)_turtlebot3 -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description -robot_namespace $(arg robot_name)" output="screen" />
+            <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+                    <param name="publish_frequency" type="double" value="50.0"/>
+            </node>
+            <node name="base_link_to_laser" pkg="tf" type="static_transform_publisher" args="-0.032 0 0.1397 0 0 0 base_link base_scan 100"/>
+
+            <!-- tranformations relay -->
+            <node name="prefixed_odom_relay" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 odom $(arg robot_name)/odom 100"/>
+            <node name="prefixed_base_footprint_relay" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 $(arg robot_name)/base_footprint base_footprint 100"/>
+    </group>
+
+    <!-- topic relay nodes -->
+    <node name="$(arg robot_name)_cmd_vel_relay" pkg="topic_tools" type="relay" args="/cmd_vel /$(arg robot_name)/cmd_vel" output="screen" />
+    <node name="$(arg robot_name)_imu_relay" pkg="topic_tools" type="relay" args="/$(arg robot_name)/imu /imu" output="screen" />
+    <node name="$(arg robot_name)_joint_states_relay" pkg="topic_tools" type="relay" args="/$(arg robot_name)/joint_states /joint_states" output="screen"/>
+    <node name="$(arg robot_name)_odom_relay" pkg="topic_tools" type="relay" args="/$(arg robot_name)/odom /odom" output="screen" />
+    <node name="$(arg robot_name)_scan_relay" pkg="topic_tools" type="relay" args="/$(arg robot_name)/scan /scan" output="screen"/>
+</launch>
